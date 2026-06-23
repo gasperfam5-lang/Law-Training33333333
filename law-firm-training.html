@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lex Academy — Law Firm Training Simulator</title>
+<style>
+  :root{
+    --bg:#0d1117;
+    --panel:#161b25;
+    --panel-2:#1d2433;
+    --accent:#c8a45c;        /* legal gold */
+    --accent-2:#e7c87c;
+    --ink:#e8edf5;
+    --muted:#8b96a8;
+    --line:#27303f;
+    --good:#3fb37f;
+    --bad:#e06b6b;
+    --blue:#5b8def;
+    --radius:16px;
+    --shadow:0 20px 50px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(200,164,92,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(91,141,239,.10), transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    min-height:100%;
+    overflow-x:hidden;
+  }
+
+  /* ---------- Top bar ---------- */
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 28px;border-bottom:1px solid var(--line);
+    background:rgba(13,17,23,.6);backdrop-filter:blur(10px);
+    position:sticky;top:0;z-index:50;
+  }
+  .brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:.5px}
+  .brand .scale{
+    width:34px;height:34px;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    border-radius:9px;color:#1a1306;font-size:19px;box-shadow:0 6px 18px rgba(200,164,92,.35);
+    animation:float 4s ease-in-out infinite;
+  }
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+  .firm-pill{
+    font-size:13px;color:var(--accent-2);background:rgba(200,164,92,.10);
+    border:1px solid rgba(200,164,92,.3);padding:6px 14px;border-radius:999px;
+    max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    transition:.3s;
+  }
+
+  /* ---------- Nav tabs ---------- */
+  nav{display:flex;gap:6px;padding:14px 28px 0;flex-wrap:wrap}
+  .tab{
+    border:1px solid transparent;background:transparent;color:var(--muted);
+    padding:10px 18px;border-radius:10px 10px 0 0;cursor:pointer;font-size:14px;
+    font-weight:600;transition:.25s;position:relative;
+  }
+  .tab:hover{color:var(--ink);background:rgba(255,255,255,.03)}
+  .tab.active{color:var(--accent-2);background:var(--panel)}
+  .tab.active::after{
+    content:"";position:absolute;left:14px;right:14px;bottom:-1px;height:2px;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:2px;
+  }
+  .tab[disabled]{opacity:.35;cursor:not-allowed}
+
+  main{max-width:980px;margin:0 auto;padding:26px 28px 80px}
+
+  /* ---------- Page transitions ---------- */
+  .page{display:none;animation:pageIn .5s cubic-bezier(.2,.7,.2,1)}
+  .page.show{display:block}
+  @keyframes pageIn{
+    from{opacity:0;transform:translateY(18px) scale(.99)}
+    to{opacity:1;transform:translateY(0) scale(1)}
+  }
+  .stagger>*{opacity:0;animation:rise .5s forwards}
+  .stagger>*:nth-child(1){animation-delay:.05s}
+  .stagger>*:nth-child(2){animation-delay:.12s}
+  .stagger>*:nth-child(3){animation-delay:.19s}
+  .stagger>*:nth-child(4){animation-delay:.26s}
+  .stagger>*:nth-child(5){animation-delay:.33s}
+  @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ---------- Cards / generic ---------- */
+  .card{
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px;box-shadow:var(--shadow);margin-bottom:18px;
+  }
+  h1{font-size:30px;margin:0 0 6px}
+  h2{font-size:20px;margin:0 0 14px;display:flex;align-items:center;gap:10px}
+  .sub{color:var(--muted);margin:0 0 22px;line-height:1.5}
+  label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:600}
+  input,textarea,select{
+    width:100%;background:#0e131c;border:1px solid var(--line);color:var(--ink);
+    padding:13px 15px;border-radius:11px;font-size:15px;font-family:inherit;transition:.2s;
+  }
+  textarea{resize:vertical;min-height:70px}
+  input:focus,textarea:focus,select:focus{
+    outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(200,164,92,.18);
+  }
+  .btn{
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#1a1306;
+    border:none;padding:13px 22px;border-radius:11px;font-weight:700;font-size:15px;
+    cursor:pointer;transition:.2s;box-shadow:0 8px 22px rgba(200,164,92,.28);
+  }
+  .btn:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(200,164,92,.42)}
+  .btn:active{transform:translateY(0)}
+  .btn.ghost{
+    background:transparent;color:var(--ink);border:1px solid var(--line);box-shadow:none;
+  }
+  .btn.ghost:hover{border-color:var(--accent);color:var(--accent-2);transform:translateY(-2px)}
+  .btn.sm{padding:8px 14px;font-size:13px}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .row>*{flex:1;min-width:0}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:640px){.grid2{grid-template-columns:1fr}}
+
+  /* ---------- Welcome ---------- */
+  .hero{text-align:center;padding:50px 20px 30px}
+  .hero .badge{
+    display:inline-block;font-size:12px;letter-spacing:2px;color:var(--accent-2);
+    border:1px solid rgba(200,164,92,.35);padding:6px 16px;border-radius:999px;
+    text-transform:uppercase;margin-bottom:20px;
+  }
+  .hero h1{font-size:42px;line-height:1.1;
+    background:linear-gradient(120deg,#fff,var(--accent-2));-webkit-background-clip:text;
+    background-clip:text;color:transparent;}
+
+  /* ---------- Q&A ---------- */
+  .qa-item{
+    background:#0e131c;border:1px solid var(--line);border-radius:12px;padding:16px;
+    margin-bottom:12px;animation:rise .4s;position:relative;
+  }
+  .qa-item .q{font-weight:700;color:var(--accent-2);margin-bottom:8px;display:flex;gap:10px}
+  .qa-item .q .num{
+    background:rgba(200,164,92,.15);color:var(--accent-2);min-width:26px;height:26px;
+    border-radius:7px;display:grid;place-items:center;font-size:13px;flex:none;
+  }
+  .qa-item .a{color:var(--ink);line-height:1.55;white-space:pre-wrap}
+  .qa-item .a.empty{color:var(--muted);font-style:italic}
+  .del{
+    position:absolute;top:12px;right:12px;background:transparent;border:none;
+    color:var(--muted);cursor:pointer;font-size:18px;transition:.2s;border-radius:6px;
+    width:28px;height:28px;
+  }
+  .del:hover{color:var(--bad);background:rgba(224,107,107,.12)}
+  .count-pill{font-size:13px;color:var(--muted);font-weight:600}
+
+  /* ---------- Events ---------- */
+  .ev-item{
+    background:#0e131c;border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+    margin-bottom:10px;display:flex;align-items:center;gap:14px;animation:rise .4s;
+  }
+  .ev-item .ev-main{flex:1;min-width:0}
+  .ev-item .ev-title{font-weight:700;margin-bottom:3px}
+  .ev-item .ev-desc{color:var(--muted);font-size:13px;line-height:1.4}
+  .chance{
+    flex:none;text-align:center;font-weight:800;font-size:18px;
+    width:64px;color:var(--accent-2);
+  }
+  .chance small{display:block;font-size:10px;color:var(--muted);font-weight:600;letter-spacing:1px}
+
+  /* ---------- Simulation ---------- */
+  .stage{
+    min-height:300px;display:grid;place-items:center;text-align:center;
+    border:1px dashed var(--line);border-radius:14px;padding:30px;position:relative;
+    overflow:hidden;
+  }
+  .scene{animation:scenePop .55s cubic-bezier(.2,.8,.2,1)}
+  @keyframes scenePop{from{opacity:0;transform:scale(.9) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}
+  .scene .icon{font-size:60px;margin-bottom:14px;display:inline-block;animation:float 3s ease-in-out infinite}
+  .scene h3{font-size:24px;margin:0 0 10px}
+  .scene p{color:var(--muted);max-width:520px;margin:0 auto 8px;line-height:1.6}
+  .tag{display:inline-block;font-size:12px;letter-spacing:1px;text-transform:uppercase;
+    padding:5px 12px;border-radius:999px;margin-bottom:14px;font-weight:700}
+  .tag.event{background:rgba(224,107,107,.14);color:#f0a3a3;border:1px solid rgba(224,107,107,.35)}
+  .tag.quiet{background:rgba(63,179,127,.14);color:#8fe0bd;border:1px solid rgba(63,179,127,.35)}
+  .tag.qna{background:rgba(91,141,239,.14);color:#a8c4fb;border:1px solid rgba(91,141,239,.35)}
+
+  .empty-state{text-align:center;color:var(--muted);padding:30px 10px}
+  .empty-state .big{font-size:40px;margin-bottom:8px;opacity:.6}
+
+  .toast{
+    position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(120px);
+    background:var(--panel-2);border:1px solid var(--accent);color:var(--ink);
+    padding:13px 22px;border-radius:12px;box-shadow:var(--shadow);z-index:100;
+    transition:transform .4s cubic-bezier(.2,.8,.2,1);font-weight:600;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0)}
+
+  .meta{display:flex;gap:18px;flex-wrap:wrap;margin-top:6px}
+  .stat{background:#0e131c;border:1px solid var(--line);border-radius:12px;padding:14px 18px;flex:1;min-width:120px}
+  .stat .n{font-size:26px;font-weight:800;color:var(--accent-2)}
+  .stat .l{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+
+  /* ---------- Preset packs ---------- */
+  .preset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+  .preset{
+    background:#0e131c;border:1px solid var(--line);border-radius:13px;padding:16px;
+    cursor:pointer;transition:.25s;position:relative;overflow:hidden;text-align:left;
+  }
+  .preset:hover{transform:translateY(-4px);border-color:var(--accent);
+    box-shadow:0 14px 30px rgba(0,0,0,.4)}
+  .preset .pico{font-size:26px;margin-bottom:8px}
+  .preset .pname{font-weight:700;margin-bottom:4px}
+  .preset .pdesc{font-size:12.5px;color:var(--muted);line-height:1.45;margin-bottom:10px}
+  .preset .pmeta{font-size:11px;color:var(--accent-2);letter-spacing:.5px;font-weight:600}
+  .preset::after{content:"Load →";position:absolute;top:14px;right:14px;font-size:12px;
+    color:var(--accent-2);opacity:0;transition:.25s}
+  .preset:hover::after{opacity:1}
+  #presetGridQ .preset::after{content:"Add +"}
+  .pack-banner{background:rgba(200,164,92,.10);border:1px solid rgba(200,164,92,.3);
+    border-radius:11px;padding:11px 15px;margin-bottom:16px;font-size:13.5px;color:var(--accent-2);
+    display:flex;align-items:center;gap:10px;animation:rise .4s}
+
+  /* ---------- Question builder: modes & options ---------- */
+  .mode-toggle{display:flex;gap:8px}
+  .mode-btn{flex:1;background:#0e131c;border:1px solid var(--line);color:var(--muted);
+    padding:11px;border-radius:10px;cursor:pointer;font-weight:700;font-size:14px;transition:.2s}
+  .mode-btn:hover{color:var(--ink);border-color:var(--accent)}
+  .mode-btn.active{background:rgba(200,164,92,.12);border-color:var(--accent);color:var(--accent-2)}
+  .opt-row{display:flex;gap:10px;align-items:center;margin-bottom:8px;animation:rise .3s}
+  .opt-correct{flex:none;width:36px;height:42px;border:1px solid var(--line);background:#0e131c;
+    color:var(--muted);border-radius:9px;cursor:pointer;font-size:17px;transition:.2s}
+  .opt-correct:hover{border-color:var(--good);color:var(--good)}
+  .opt-correct.on{background:rgba(63,179,127,.16);border-color:var(--good);color:var(--good)}
+  .opt-input{flex:1}
+  .opt-del{flex:none;width:36px;height:42px;border:1px solid var(--line);background:transparent;
+    color:var(--muted);border-radius:9px;cursor:pointer;transition:.2s}
+  .opt-del:hover{border-color:var(--bad);color:var(--bad)}
+  .qtype{font-size:10px;letter-spacing:1px;text-transform:uppercase;background:rgba(91,141,239,.14);
+    color:#a8c4fb;padding:3px 8px;border-radius:6px;margin-left:8px;font-weight:700;white-space:nowrap}
+  .opts-view{margin-top:8px;display:flex;flex-direction:column;gap:5px}
+  .opt-view{font-size:13.5px;color:var(--muted);padding:7px 11px;border:1px solid var(--line);
+    border-radius:8px;background:#0e131c}
+  .opt-view.correct{color:#bff0d8;border-color:rgba(63,179,127,.4);background:rgba(63,179,127,.10);font-weight:600}
+
+  /* ---------- Interactive quiz (simulation) ---------- */
+  .quiz-opts{display:flex;flex-direction:column;gap:9px;margin-top:8px;width:100%;max-width:540px;
+    margin-left:auto;margin-right:auto}
+  .quiz-opt{text-align:left;background:#0e131c;border:1px solid var(--line);color:var(--ink);
+    padding:13px 16px;border-radius:11px;cursor:pointer;transition:.18s;font-size:14.5px;font-family:inherit}
+  .quiz-opt:hover:not(:disabled){border-color:var(--accent);transform:translateX(4px)}
+  .quiz-opt:disabled{cursor:default;opacity:.85}
+  .quiz-opt.right{border-color:var(--good);background:rgba(63,179,127,.16);color:#cdf3e1;font-weight:700}
+  .quiz-opt.wrong{border-color:var(--bad);background:rgba(224,107,107,.16);color:#f6c9c9;font-weight:700}
+  .quiz-feedback{font-weight:800;margin-top:12px;font-size:15px}
+  .quiz-feedback.good{color:var(--good)}
+  .quiz-feedback.bad{color:var(--bad)}
+  .quiz-write{width:100%;max-width:540px;display:block;margin:0 auto}
+  .quiz-result{text-align:left;max-width:540px;margin:12px auto 0;background:#0e131c;
+    border:1px solid var(--line);border-radius:11px;padding:15px;line-height:1.5}
+  .quiz-result .your-ans{margin-bottom:9px}
+  .quiz-result .model-ans{color:var(--accent-2);margin-bottom:12px}
+  .self-grade{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+
+  .hint{font-size:12.5px;color:var(--muted);margin-top:8px}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#2a3342;border-radius:10px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="scale">⚖️</div>
+    <span>LEX&nbsp;ACADEMY</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="firm-pill" id="firmPill">No firm set</div>
+    <button class="btn ghost sm" id="saveFileBtn" title="Download your progress as a save file">💾 Save</button>
+    <button class="btn ghost sm" id="loadFileBtn" title="Load a save file from any computer">📂 Load</button>
+    <input type="file" id="fileInput" accept=".json,application/json" style="display:none"/>
+  </div>
+</header>
+
+<nav id="nav">
+  <button class="tab active" data-go="welcome">Welcome</button>
+  <button class="tab" data-go="questions" data-lock>Q&amp;A Trainer</button>
+  <button class="tab" data-go="events" data-lock>Workday Events</button>
+  <button class="tab" data-go="simulate" data-lock>Run Simulation</button>
+</nav>
+
+<main>
+
+  <!-- ===== WELCOME ===== -->
+  <section class="page show" id="welcome">
+    <div class="hero stagger">
+      <div class="badge">Law Firm Training Simulator</div>
+      <h1>Train your team for any day at the firm.</h1>
+      <p class="sub" style="max-width:560px;margin:14px auto 0">
+        Name your practice, build an unlimited bank of practice questions, define the
+        unpredictable events that strike during a workday, then run a live simulation.
+      </p>
+    </div>
+
+    <div class="card stagger" style="max-width:560px;margin:10px auto 0">
+      <h2>🏛️ Set up your firm</h2>
+      <label for="firmInput">Business / Firm name</label>
+      <input id="firmInput" placeholder="e.g. Hartwell &amp; Crane LLP" autocomplete="off"/>
+      <label for="motoInput" style="margin-top:14px">Tagline <span style="opacity:.6">(optional)</span></label>
+      <input id="motoInput" placeholder="e.g. Justice, refined." autocomplete="off"/>
+      <div class="row" style="margin-top:20px">
+        <button class="btn" id="startBtn">Open the Firm →</button>
+        <button class="btn ghost" id="demoBtn" style="flex:none">Load sample data</button>
+      </div>
+      <p class="hint">Everything is saved automatically in your browser. No internet required.</p>
+    </div>
+
+    <div class="card stagger" style="max-width:760px;margin:18px auto 0">
+      <h2>📚 Preset Training Packs <span class="count-pill" style="margin-left:auto;font-weight:600">for real law-firm work</span></h2>
+      <p class="sub" style="margin-bottom:18px">Pick a ready-made pack and we'll load a fresh, <strong>randomized</strong> set of questions and events. Hit <em>Renew</em> any time to shuffle in a different selection from each pack's pool.</p>
+      <div id="presetGrid" class="preset-grid"></div>
+      <p class="hint">Loading a pack replaces your current questions &amp; events. You can still add your own afterward.</p>
+    </div>
+  </section>
+
+  <!-- ===== QUESTIONS ===== -->
+  <section class="page" id="questions">
+    <div class="card">
+      <h2>📋 Q&amp;A Trainer
+        <span class="count-pill" id="qCount" style="margin-left:auto"></span>
+        <button class="btn ghost sm" id="renewBtn" style="display:none;margin-left:10px">↻ Renew pack</button>
+      </h2>
+      <div id="packBanner" style="display:none"></div>
+      <p class="sub" style="margin-bottom:18px">Add as many questions as you like — there's no limit. Choose <strong>Multiple Choice</strong> (3–10 answer options) or hit <strong>Written</strong> so the test taker has to type the answer.</p>
+
+      <label>Question / scenario</label>
+      <textarea id="qText" placeholder="e.g. A walk-in client asks for legal advice but hasn't signed a retainer. What do you do?"></textarea>
+
+      <div class="mode-toggle" style="margin-top:16px">
+        <button type="button" class="mode-btn active" data-mode="mc">◉ Multiple Choice</button>
+        <button type="button" class="mode-btn" data-mode="written">✍ Written</button>
+      </div>
+
+      <div id="mcSection" style="margin-top:16px">
+        <label>Answer options — click the circle to mark the correct one (3–10 options)</label>
+        <div id="optList"></div>
+        <button type="button" class="btn ghost sm" id="addOptBtn">+ Add option</button>
+      </div>
+
+      <div id="writtenSection" style="display:none;margin-top:16px">
+        <label>Model answer — what a correct typed response should say</label>
+        <textarea id="aText" placeholder="e.g. Do not give legal advice until conflicts are checked and a retainer is signed..."></textarea>
+      </div>
+
+      <div style="margin-top:16px"><button class="btn" id="addQBtn">+ Add Question</button></div>
+    </div>
+
+    <div class="card">
+      <h2>📚 Add a Preset Pack</h2>
+      <p class="sub" style="margin-bottom:18px">Don't want to type everything? Click a pack to <strong>add</strong> a fresh, randomized batch of professional questions and events to your quiz. Click again to add more — every click pulls a different random set.</p>
+      <div id="presetGridQ" class="preset-grid"></div>
+    </div>
+
+    <div class="card">
+      <h2>Question Bank</h2>
+      <div id="qList"></div>
+    </div>
+  </section>
+
+  <!-- ===== EVENTS ===== -->
+  <section class="page" id="events">
+    <div class="card">
+      <h2>⚡ Workday Events</h2>
+      <p class="sub" style="margin-bottom:18px">Define things that <em>may or may not</em> happen during work. Each one fires based on the chance you set when you run a simulation.</p>
+      <label>Event title</label>
+      <input id="evTitle" placeholder="e.g. Opposing counsel files an emergency motion"/>
+      <div class="grid2" style="margin-top:14px">
+        <div>
+          <label>What happens / how to respond</label>
+          <textarea id="evDesc" placeholder="e.g. Drop non-urgent tasks, notify the partner, draft a response within 24h."></textarea>
+        </div>
+        <div>
+          <label>Chance of happening: <span id="chanceLbl" style="color:var(--accent-2);font-weight:700">40%</span></label>
+          <input type="range" id="evChance" min="1" max="100" value="40" style="padding:0;margin-top:10px"/>
+          <p class="hint">Slide left for rare crises, right for everyday occurrences.</p>
+        </div>
+      </div>
+      <div style="margin-top:14px"><button class="btn" id="addEvBtn">+ Add Event</button></div>
+    </div>
+
+    <div class="card">
+      <h2>Event Deck</h2>
+      <div id="evList"></div>
+    </div>
+  </section>
+
+  <!-- ===== SIMULATE ===== -->
+  <section class="page" id="simulate">
+    <div class="card">
+      <h2>🎬 Run the Workday Simulation</h2>
+      <p class="sub">Each "turn" rolls your events (some happen, some don't) and quizzes your team from the question bank. Press Next to advance through the day.</p>
+      <div class="meta" id="simStats"></div>
+      <div class="stage" id="stage" style="margin-top:18px">
+        <div class="scene">
+          <span class="icon">🏛️</span>
+          <h3>Ready when you are</h3>
+          <p>Press <strong>Start the Day</strong> to begin. Events will trigger at random and questions will appear one after another — endlessly.</p>
+        </div>
+      </div>
+      <div class="row" style="margin-top:18px;flex-wrap:wrap">
+        <button class="btn" id="nextBtn">▶ Start the Day</button>
+        <button class="btn ghost" id="resetSimBtn" style="flex:none">↺ Reset</button>
+      </div>
+      <p class="hint">Tip: turns continue forever — keep pressing Next to drill as long as you like.</p>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ State ============ */
+/* Safe storage: localStorage can throw on file:// or when disabled, which would
+   kill the whole script. Fall back to an in-memory store so the app still works. */
+const _mem = {};
+const LS = {
+  get(k){ try{ const v=localStorage.getItem(k); return v===null ? (k in _mem?_mem[k]:null) : v; }
+          catch(e){ return k in _mem?_mem[k]:null; } },
+  set(k,v){ _mem[k]=String(v); try{ localStorage.setItem(k,v); }catch(e){} },
+  del(k){ delete _mem[k]; try{ localStorage.removeItem(k); }catch(e){} },
+};
+function parseJSON(v, fallback){ try{ return v?JSON.parse(v):fallback; }catch(e){ return fallback; } }
+
+const store = {
+  firm: LS.get('lex_firm') || '',
+  motto: LS.get('lex_motto') || '',
+  questions: parseJSON(LS.get('lex_q'), []),
+  events: parseJSON(LS.get('lex_ev'), []),
+  currentPack: LS.get('lex_pack') || null,
+};
+function save(){
+  LS.set('lex_firm', store.firm);
+  LS.set('lex_motto', store.motto);
+  LS.set('lex_q', JSON.stringify(store.questions));
+  LS.set('lex_ev', JSON.stringify(store.events));
+  if(store.currentPack) LS.set('lex_pack', store.currentPack);
+  else LS.del('lex_pack');
+}
+
+/* ============ Helpers ============ */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+let toastTimer;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+/* ============ Navigation ============ */
+function go(id){
+  $$('.page').forEach(p=>p.classList.remove('show'));
+  $$('.tab').forEach(t=>t.classList.toggle('active', t.dataset.go===id));
+  const pg = document.getElementById(id);
+  // retrigger animation
+  pg.classList.remove('show'); void pg.offsetWidth; pg.classList.add('show');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+$$('.tab').forEach(t=>t.addEventListener('click',()=>{
+  if(t.hasAttribute('disabled')) return;
+  go(t.dataset.go);
+}));
+
+function lockTabs(locked){
+  $$('.tab[data-lock]').forEach(t=>{
+    if(locked) t.setAttribute('disabled','');
+    else t.removeAttribute('disabled');
+  });
+}
+
+/* ============ Welcome / firm ============ */
+function refreshFirm(){
+  $('#firmPill').textContent = store.firm ? '⚖️ '+store.firm + (store.motto? ' — '+store.motto : '') : 'No firm set';
+  $('#firmInput').value = store.firm;
+  $('#motoInput').value = store.motto;
+  lockTabs(!store.firm);
+}
+$('#startBtn').addEventListener('click',()=>{
+  const v = $('#firmInput').value.trim();
+  if(!v){ toast('Please enter a firm name first.'); $('#firmInput').focus(); return; }
+  store.firm = v; store.motto = $('#motoInput').value.trim(); save(); refreshFirm();
+  toast('Welcome to '+v+' ✦');
+  go('questions');
+});
+$('#demoBtn').addEventListener('click',()=>{
+  store.firm = $('#firmInput').value.trim() || 'Hartwell & Crane LLP';
+  store.motto = $('#motoInput').value.trim() || 'Justice, refined.';
+  store.questions = [
+    {q:'A walk-in client asks for legal advice before signing a retainer. What do you do?', type:'mc', options:[
+      {text:'Run a conflict check and have them sign a retainer before giving advice', correct:true},
+      {text:'Give quick advice now and paperwork later', correct:false},
+      {text:'Tell them to find another firm', correct:false},
+      {text:'Take a deposit and start immediately', correct:false},
+    ]},
+    {q:'You discover a filing deadline is tomorrow and the draft isn\'t ready. Next step?', type:'mc', options:[
+      {text:'Notify the supervising attorney and prioritize the filing immediately', correct:true},
+      {text:'Wait and hope for an extension', correct:false},
+      {text:'File a blank placeholder document', correct:false},
+      {text:'Ignore it; deadlines are usually flexible', correct:false},
+      {text:'Ask the client to handle it themselves', correct:false},
+    ]},
+    {q:'A client emails confidential documents to the wrong address. How do you respond?', type:'written',
+     a:'Notify the supervising attorney at once, document the incident, and follow the firm\'s data-breach / confidentiality protocol.'},
+    {q:'Name the core duties owed to every client.', type:'written',
+     a:'Competence, confidentiality, loyalty, diligence, and communication.'},
+  ];
+  store.events = [
+    {t:'Opposing counsel files an emergency motion', d:'Drop non-urgent tasks, alert the partner, and begin a response draft within 24 hours.', c:35},
+    {t:'A key witness becomes unreachable', d:'Document attempts to contact, inform the case team, and explore alternative evidence.', c:25},
+    {t:'The court reschedules a hearing', d:'Update the master calendar, notify the client, and adjust prep timelines.', c:50},
+    {t:'A big new client signs a retainer', d:'Open a matter file, run conflict checks, and schedule an intake meeting.', c:40},
+    {t:'IT outage takes down the document system', d:'Switch to offline backups, log affected work, and notify operations.', c:15},
+  ];
+  store.currentPack = null;
+  save(); refreshFirm();
+  renderQ(); renderEv(); renderSimStats(); renderPackBanner();
+  toast('Sample firm loaded ✦');
+  go('questions');
+});
+
+/* ============ Questions ============ */
+function renderQ(){
+  const list = $('#qList');
+  $('#qCount').textContent = store.questions.length + (store.questions.length===1?' question':' questions');
+  if(!store.questions.length){
+    list.innerHTML = `<div class="empty-state"><div class="big">📭</div>No questions yet. Add your first one above — there's no limit.</div>`;
+    return;
+  }
+  list.innerHTML = store.questions.map((item,i)=>{
+    const type = item.type==='mc' ? 'mc' : 'written';
+    let body;
+    if(type==='mc'){
+      body = `<div class="opts-view">`+(item.options||[]).map(o=>
+        `<div class="opt-view ${o.correct?'correct':''}">${o.correct?'✓':'•'} ${esc(o.text)}</div>`
+      ).join('')+`</div>`;
+    } else {
+      body = `<div class="a ${item.a?'':'empty'}">${item.a?esc(item.a):'No model answer — recall test.'}</div>`;
+    }
+    return `<div class="qa-item">
+      <button class="del" data-del="${i}" title="Delete">✕</button>
+      <div class="q"><span class="num">${i+1}</span><span>${esc(item.q)}<span class="qtype">${type==='mc'?'Multiple choice':'Written'}</span></span></div>
+      ${body}
+    </div>`;
+  }).join('');
+  $$('#qList .del').forEach(b=>b.addEventListener('click',()=>{
+    store.questions.splice(+b.dataset.del,1); save(); renderQ(); renderSimStats();
+  }));
+}
+/* ----- Builder: Multiple Choice vs Written ----- */
+let qMode = 'mc';
+$$('.mode-btn').forEach(b=>b.addEventListener('click',()=>{
+  qMode = b.dataset.mode;
+  $$('.mode-btn').forEach(x=>x.classList.toggle('active', x.dataset.mode===qMode));
+  $('#mcSection').style.display = qMode==='mc' ? 'block' : 'none';
+  $('#writtenSection').style.display = qMode==='written' ? 'block' : 'none';
+}));
+
+function addOptionRow(value=''){
+  if($$('#optList .opt-row').length >= 10){ toast('Up to 10 options.'); return; }
+  const row = document.createElement('div');
+  row.className = 'opt-row';
+  row.innerHTML =
+    `<button type="button" class="opt-correct" title="Mark this as the correct answer">○</button>
+     <input class="opt-input" placeholder="Answer option" value="${value.replace(/"/g,'&quot;')}"/>
+     <button type="button" class="opt-del" title="Remove option">✕</button>`;
+  $('#optList').appendChild(row);
+  row.querySelector('.opt-correct').addEventListener('click',()=>{
+    $$('#optList .opt-correct').forEach(c=>{ c.classList.remove('on'); c.textContent='○'; });
+    const b = row.querySelector('.opt-correct'); b.classList.add('on'); b.textContent='●';
+  });
+  row.querySelector('.opt-del').addEventListener('click',()=>{
+    if($$('#optList .opt-row').length<=3){ toast('Need at least 3 options.'); return; }
+    row.remove(); updateOptControls();
+  });
+  updateOptControls();
+}
+function updateOptControls(){
+  const rows = $$('#optList .opt-row');
+  rows.forEach(r=> r.querySelector('.opt-del').style.visibility = rows.length>3 ? 'visible' : 'hidden');
+  $('#addOptBtn').style.display = rows.length>=10 ? 'none' : 'inline-block';
+}
+function resetBuilder(){
+  $('#qText').value=''; $('#aText').value='';
+  $('#optList').innerHTML='';
+  for(let i=0;i<3;i++) addOptionRow();
+}
+$('#addOptBtn').addEventListener('click',()=>addOptionRow());
+
+$('#addQBtn').addEventListener('click',()=>{
+  const q = $('#qText').value.trim();
+  if(!q){ toast('Type a question first.'); $('#qText').focus(); return; }
+  if(qMode==='mc'){
+    const options=[]; let hasCorrect=false;
+    $$('#optList .opt-row').forEach(r=>{
+      const text = r.querySelector('.opt-input').value.trim();
+      const correct = r.querySelector('.opt-correct').classList.contains('on');
+      if(text){ options.push({text, correct}); if(correct) hasCorrect=true; }
+    });
+    if(options.length<3){ toast('Add at least 3 answer options.'); return; }
+    if(!hasCorrect){ toast('Click a circle ○ to mark the correct answer.'); return; }
+    store.questions.push({q, type:'mc', options});
+  } else {
+    const a = $('#aText').value.trim();
+    if(!a){ toast('Enter the model answer for a written question.'); $('#aText').focus(); return; }
+    store.questions.push({q, type:'written', a});
+  }
+  resetBuilder(); $('#qText').focus();
+  clearPack(); save(); renderQ(); renderSimStats(); toast('Question added ✦');
+});
+
+/* ============ Events ============ */
+$('#evChance').addEventListener('input', e=> $('#chanceLbl').textContent = e.target.value+'%');
+function renderEv(){
+  const list = $('#evList');
+  if(!store.events.length){
+    list.innerHTML = `<div class="empty-state"><div class="big">🎲</div>No events yet. Define what might happen during a workday above.</div>`;
+    return;
+  }
+  list.innerHTML = store.events.map((ev,i)=>`
+    <div class="ev-item">
+      <div class="chance">${ev.c}%<small>CHANCE</small></div>
+      <div class="ev-main">
+        <div class="ev-title">${esc(ev.t)}</div>
+        <div class="ev-desc">${esc(ev.d)||'—'}</div>
+      </div>
+      <button class="del" data-del="${i}" style="position:static" title="Delete">✕</button>
+    </div>`).join('');
+  $$('#evList .del').forEach(b=>b.addEventListener('click',()=>{
+    store.events.splice(+b.dataset.del,1); save(); renderEv(); renderSimStats();
+  }));
+}
+$('#addEvBtn').addEventListener('click',()=>{
+  const t = $('#evTitle').value.trim();
+  if(!t){ toast('Give the event a title.'); $('#evTitle').focus(); return; }
+  store.events.push({t, d:$('#evDesc').value.trim(), c:+$('#evChance').value});
+  $('#evTitle').value=''; $('#evDesc').value=''; $('#evChance').value=40; $('#chanceLbl').textContent='40%';
+  clearPack(); save(); renderEv(); renderSimStats(); toast('Event added ✦');
+});
+
+/* ============ Simulation ============ */
+let turn = 0;
+let score = {correct:0, total:0};
+function renderSimStats(){
+  $('#simStats').innerHTML = `
+    <div class="stat"><div class="n">${store.questions.length}</div><div class="l">Questions</div></div>
+    <div class="stat"><div class="n">${store.events.length}</div><div class="l">Possible Events</div></div>
+    <div class="stat"><div class="n">${turn}</div><div class="l">Turns Played</div></div>
+    <div class="stat"><div class="n">${score.correct}/${score.total}</div><div class="l">Score</div></div>`;
+}
+/* loose keyword overlap to hint at written-answer accuracy */
+function looseMatch(a,b){
+  const norm = s => (s||'').toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(w=>w.length>3);
+  const A = new Set(norm(a)), B = norm(b);
+  if(!B.length) return 0;
+  let hit=0; B.forEach(w=>{ if(A.has(w)) hit++; });
+  return hit/B.length;
+}
+/* render the interactive answer UI for the current question */
+function renderAnswerArea(item){
+  const area = $('#answerArea'); if(!area) return;
+  const type = item.type==='mc' ? 'mc' : 'written';
+  if(type==='mc'){
+    const opts = shuffle(item.options||[]);
+    area.innerHTML = `<div class="quiz-opts">`+opts.map(o=>
+      `<button type="button" class="quiz-opt" data-correct="${o.correct?1:0}">${esc(o.text)}</button>`
+    ).join('')+`</div><p class="quiz-feedback" style="display:none"></p>`;
+    area.querySelectorAll('.quiz-opt').forEach(btn=>btn.addEventListener('click',()=>{
+      if(area.dataset.done) return;
+      area.dataset.done='1';
+      const correct = btn.dataset.correct==='1';
+      area.querySelectorAll('.quiz-opt').forEach(b=>{
+        b.disabled=true; if(b.dataset.correct==='1') b.classList.add('right');
+      });
+      if(!correct) btn.classList.add('wrong');
+      const fb = area.querySelector('.quiz-feedback');
+      fb.style.display='block';
+      fb.className = 'quiz-feedback '+(correct?'good':'bad');
+      fb.textContent = correct ? '✓ Correct!' : '✗ Not quite — the correct answer is highlighted.';
+      score.total++; if(correct) score.correct++; renderSimStats();
+    }));
+  } else {
+    area.innerHTML =
+      `<textarea class="quiz-write" placeholder="Type your answer here... (capitalization doesn't matter)" autocapitalize="none" autocorrect="off" spellcheck="false"></textarea>
+       <button type="button" class="btn sm quiz-submit" style="margin-top:10px">Submit answer</button>
+       <div class="quiz-result" style="display:none"></div>`;
+    area.querySelector('.quiz-submit').addEventListener('click',()=>{
+      if(area.dataset.done) return;
+      const typed = area.querySelector('.quiz-write').value.trim();
+      if(!typed){ toast('Type your answer first.'); return; }
+      area.dataset.done='1';
+      area.querySelector('.quiz-write').disabled=true;
+      area.querySelector('.quiz-submit').style.display='none';
+      const model = item.a||'';
+      const sim = looseMatch(typed, model);
+      const exact = typed.toLowerCase().replace(/\s+/g,' ').trim() === model.toLowerCase().replace(/\s+/g,' ').trim();
+      const auto = exact || sim>=0.5;          /* caps-insensitive auto verdict */
+      const res = area.querySelector('.quiz-result');
+      res.style.display='block';
+      res.innerHTML =
+        `<div class="your-ans"><strong>Your answer:</strong> ${esc(typed)}</div>
+         <div class="model-ans"><strong>Model answer:</strong> ${esc(model)||'(none provided)'}</div>
+         ${model?`<p class="quiz-feedback ${auto?'good':'bad'}" style="margin-top:0">${auto?'✓ Looks correct':'✗ Looks off'} — capitalization isn't checked${sim?` (${Math.round(sim*100)}% keyword match)`:''}.</p>`:''}
+         <div class="self-grade">Override / confirm:
+           <button type="button" class="btn ghost sm grade-good">✓ I got it</button>
+           <button type="button" class="btn ghost sm grade-bad">✗ Missed it</button>
+         </div>`;
+      const sg = res.querySelector('.self-grade');
+      res.querySelector('.grade-good').addEventListener('click',()=>{ score.total++; score.correct++; renderSimStats(); sg.innerHTML='Scored: <span style="color:var(--good);font-weight:700">✓ Correct</span>'; });
+      res.querySelector('.grade-bad').addEventListener('click',()=>{ score.total++; renderSimStats(); sg.innerHTML='Scored: <span style="color:var(--bad);font-weight:700">✗ Missed</span>'; });
+    });
+  }
+}
+function setScene(html){
+  const stage = $('#stage');
+  stage.innerHTML = `<div class="scene">${html}</div>`;
+}
+function nextTurn(){
+  if(!store.questions.length && !store.events.length){
+    setScene(`<span class="icon">📭</span><h3>Nothing to simulate yet</h3>
+      <p>Add at least one question or event first.</p>`);
+    return;
+  }
+  turn++;
+  // 1) roll every event independently
+  const fired = store.events.filter(ev => Math.random()*100 < ev.c);
+  let html = '';
+  if(fired.length){
+    const ev = fired[Math.floor(Math.random()*fired.length)]; // surface one fired event
+    html = `<span class="tag event">⚡ Event Triggered</span>
+      <span class="icon">🔥</span>
+      <h3>${esc(ev.t)}</h3>
+      <p>${esc(ev.d)||'How does your team respond?'}</p>
+      ${fired.length>1?`<p style="opacity:.7">+${fired.length-1} other event(s) also occurred this turn.</p>`:''}`;
+  } else if(store.events.length){
+    html = `<span class="tag quiet">✓ Quiet Stretch</span>
+      <span class="icon">☕</span>
+      <h3>No events this turn</h3>
+      <p>The office is calm — a good moment to sharpen skills.</p>`;
+  }
+  // 2) pose a question (endlessly, random)
+  let currentQ = null;
+  if(store.questions.length){
+    currentQ = store.questions[Math.floor(Math.random()*store.questions.length)];
+    html += `<div style="margin-top:18px;border-top:1px solid var(--line);padding-top:18px;width:100%">
+      <span class="tag qna">📋 ${currentQ.type==='mc'?'Multiple Choice':'Written'}</span>
+      <h3 style="font-size:20px">${esc(currentQ.q)}</h3>
+      <div id="answerArea" style="margin-top:12px"></div>
+    </div>`;
+  }
+  setScene(`<div style="font-size:12px;letter-spacing:2px;color:var(--muted);margin-bottom:6px">
+      TURN ${turn} · ${esc(store.firm)}</div>${html}`);
+  if(currentQ) renderAnswerArea(currentQ);
+  $('#nextBtn').textContent = '▶ Next Turn';
+  renderSimStats();
+}
+$('#nextBtn').addEventListener('click', nextTurn);
+$('#resetSimBtn').addEventListener('click',()=>{
+  turn=0; score={correct:0,total:0}; renderSimStats();
+  setScene(`<span class="icon">🏛️</span><h3>Day reset</h3><p>Press Start the Day to begin again.</p>`);
+  $('#nextBtn').textContent='▶ Start the Day';
+  toast('Simulation reset');
+});
+
+/* ============ Preset Training Packs ============ */
+/* Each pack has a LARGE pool; we randomly draw a fresh subset every load/renew. */
+const PRESETS = [
+  {
+    id:'ethics', icon:'⚖️', name:'Legal Ethics & Professional Responsibility',
+    desc:'Conflicts, candor, and the duties every lawyer owes.', pick:6, epick:4,
+    qPool:[
+      {q:'A walk-in client asks for legal advice before signing a retainer. What do you do?', a:'Do not give legal advice. Run a conflict check, explain the engagement process, and get a signed retainer before substantive discussion.'},
+      {q:'You realize the firm represents a party adverse to a new prospective client. Next step?', a:'Decline or withdraw to avoid a conflict of interest; document the conflict check and notify the partner.'},
+      {q:'A client asks you to file a document you know contains a false statement. Response?', a:'Refuse. You owe a duty of candor to the tribunal and cannot knowingly present false evidence.'},
+      {q:'A friend asks about a case you are handling. What can you share?', a:'Nothing. Client confidentiality applies to all information relating to the representation.'},
+      {q:'You made an error that may harm the client. What is your obligation?', a:'Promptly inform the client and the supervising attorney; do not conceal the mistake.'},
+      {q:'Can you accept a gift from a client?', a:'Generally avoid substantial gifts; soliciting them or drafting an instrument giving yourself a gift is prohibited.'},
+      {q:'A former client\'s matter relates to a current one. What must you check?', a:'Whether the matters are substantially related and whether confidential information could be used against the former client.'},
+      {q:'What are the core duties owed to every client?', a:'Competence, confidentiality, loyalty, diligence, and communication.'},
+      {q:'A client wants to pursue a frivolous claim. What do you advise?', a:'Explain you cannot file claims lacking a good-faith legal/factual basis; counsel against it.'},
+      {q:'You are unsure if you are competent to handle a specialized matter. What do you do?', a:'Associate with a competent lawyer, gain the needed competence, or decline the matter.'},
+    ],
+    evPool:[
+      {t:'A potential conflict of interest surfaces mid-matter', d:'Pause work, run a full conflict check, and escalate to the ethics partner.', c:30},
+      {t:'A client pressures you to bend a rule', d:'Document the request, decline politely, and consult your supervisor.', c:40},
+      {t:'The bar association sends a CLE compliance reminder', d:'Log required hours and schedule outstanding ethics credits.', c:55},
+      {t:'You discover a missed disclosure obligation', d:'Notify the supervising attorney immediately and correct the record.', c:25},
+      {t:'A juror or judge has a possible relationship to the client', d:'Raise it promptly with the court and the case team.', c:15},
+    ],
+  },
+  {
+    id:'intake', icon:'🤝', name:'Client Intake & Communication',
+    desc:'First contact, expectations, and keeping clients informed.', pick:6, epick:4,
+    qPool:[
+      {q:'How should you open a new client intake call?', a:'Confirm identity, run a conflict check, explain confidentiality, and gather the basic facts before quoting fees.'},
+      {q:'A prospective client overshares before retention. What do you note?', a:'Limit intake to what is needed; even un-retained prospects may be owed confidentiality.'},
+      {q:'How quickly should client emails be acknowledged?', a:'Acknowledge within firm standards (often 24 hours), even if a full answer takes longer.'},
+      {q:'A client has unrealistic expectations about outcome. How do you respond?', a:'Set honest, documented expectations in writing; never guarantee a result.'},
+      {q:'What goes into an engagement letter?', a:'Scope of work, fees and billing, responsibilities, and termination terms.'},
+      {q:'A client repeatedly calls outside business hours. How to handle?', a:'Set clear communication boundaries and channels in writing while staying responsive.'},
+      {q:'How do you explain legal fees to a new client?', a:'Be transparent about hourly rates, retainers, costs, and how invoices work.'},
+      {q:'A client doesn\'t speak English fluently. What do you arrange?', a:'Provide a qualified interpreter and translated key documents to ensure understanding.'},
+      {q:'When must you decline an intake?', a:'On conflicts, lack of competence, capacity limits, or frivolous matters.'},
+      {q:'How do you document an intake meeting?', a:'Create a dated memo of facts, advice given, and next steps in the matter file.'},
+    ],
+    evPool:[
+      {t:'A high-value client signs a retainer', d:'Open a matter file, run conflicts, and schedule the intake meeting.', c:40},
+      {t:'A prospective client ghosts after the consult', d:'Send a courteous follow-up and a non-engagement letter.', c:45},
+      {t:'A client sends documents to the wrong address', d:'Notify the supervisor, document it, and follow the confidentiality protocol.', c:20},
+      {t:'A client demands an urgent same-day meeting', d:'Triage urgency, check calendars, and confirm scope before committing.', c:50},
+      {t:'A language barrier appears during intake', d:'Arrange a qualified interpreter and reschedule if needed.', c:25},
+    ],
+  },
+  {
+    id:'litigation', icon:'🏛️', name:'Litigation & Court Procedure',
+    desc:'Deadlines, filings, motions, and courtroom readiness.', pick:6, epick:4,
+    qPool:[
+      {q:'You discover a filing deadline is tomorrow and the draft isn\'t ready. Next step?', a:'Alert the supervising attorney immediately, prioritize the filing, and prepare a motion for extension as backup.'},
+      {q:'Opposing counsel serves a discovery request. What is your first move?', a:'Calendar the response deadline, review scope, and flag objections and privileged material.'},
+      {q:'How do you handle a document that may be privileged in discovery?', a:'Withhold it, log it on a privilege log, and confirm with the supervising attorney.'},
+      {q:'What must you confirm before a court filing goes out?', a:'Correct caption, deadline, signatures, exhibits, service on all parties, and court rules compliance.'},
+      {q:'A witness gives testimony that contradicts their statement. Response?', a:'Note the inconsistency, inform the case team, and prepare impeachment material.'},
+      {q:'How do you prepare a client for a deposition?', a:'Review key facts, advise to answer only what is asked, tell the truth, and stay calm.'},
+      {q:'The court issues an order you don\'t understand. What do you do?', a:'Research it, consult the supervising attorney, and calendar any deadlines it creates.'},
+      {q:'What is the purpose of a motion in limine?', a:'To exclude prejudicial or inadmissible evidence before trial.'},
+      {q:'You missed serving a party. How do you fix it?', a:'Serve immediately, document the cure, and notify the attorney about any deadline impact.'},
+      {q:'How should the trial binder be organized?', a:'Pleadings, witness outlines, exhibits, key law, and a chronology — indexed and tabbed.'},
+    ],
+    evPool:[
+      {t:'Opposing counsel files an emergency motion', d:'Drop non-urgent tasks, alert the partner, and draft a response within 24 hours.', c:35},
+      {t:'The court reschedules a hearing', d:'Update the master calendar, notify the client, and adjust prep timelines.', c:50},
+      {t:'A key witness becomes unreachable', d:'Document contact attempts, inform the team, and explore alternatives.', c:25},
+      {t:'A filing is rejected by the clerk for a formatting error', d:'Correct it immediately and refile before the deadline.', c:30},
+      {t:'New evidence surfaces the night before trial', d:'Assess admissibility, notify the attorney, and update the trial strategy.', c:20},
+    ],
+  },
+  {
+    id:'corporate', icon:'📑', name:'Corporate & Transactional',
+    desc:'Contracts, entities, due diligence, and deals.', pick:6, epick:4,
+    qPool:[
+      {q:'What should you check first when reviewing a contract?', a:'Parties, scope, term, payment, liability, termination, and governing law.'},
+      {q:'A client wants to form a business entity. What do you discuss?', a:'Liability, taxation, governance, and cost across LLC, corporation, and partnership options.'},
+      {q:'What is the purpose of due diligence in an acquisition?', a:'To verify assets, liabilities, contracts, litigation, and risks before closing.'},
+      {q:'How do you handle an ambiguous contract clause?', a:'Flag it, propose clarifying language, and confirm intent with the client.'},
+      {q:'What is an indemnification clause?', a:'A promise by one party to cover specified losses or liabilities of another.'},
+      {q:'A signature block lists the wrong corporate title. What do you do?', a:'Correct it and confirm signing authority before execution.'},
+      {q:'What goes into a closing checklist?', a:'Signed agreements, consents, filings, payments, and post-closing deliverables.'},
+      {q:'Why review a company\'s existing contracts before a deal?', a:'To find change-of-control, assignment, and termination provisions that affect the transaction.'},
+      {q:'What is a force majeure clause?', a:'A provision excusing performance due to extraordinary events beyond a party\'s control.'},
+      {q:'How do you track contract obligations after signing?', a:'Calendar key dates, renewals, and deliverables in a contract management system.'},
+    ],
+    evPool:[
+      {t:'A deal counterparty demands a last-minute term change', d:'Assess impact, consult the lead attorney, and redline carefully.', c:45},
+      {t:'Due diligence uncovers undisclosed litigation', d:'Flag it to the deal team and reassess risk and pricing.', c:25},
+      {t:'A signing is moved up by 48 hours', d:'Accelerate the closing checklist and confirm all consents.', c:40},
+      {t:'A regulatory filing requirement is discovered', d:'Identify the agency, deadline, and required forms immediately.', c:30},
+      {t:'A client wants to skip a key contract protection', d:'Document advice, explain the risk in writing, and respect the informed decision.', c:35},
+    ],
+  },
+  {
+    id:'security', icon:'🔐', name:'Confidentiality & Data Security',
+    desc:'Protecting client data and handling breaches.', pick:5, epick:4,
+    qPool:[
+      {q:'A client emails confidential documents to the wrong address. How do you respond?', a:'Notify the supervising attorney at once, document it, and follow the firm\'s data-breach protocol.'},
+      {q:'You receive a phishing email appearing to be from a partner. What do you do?', a:'Do not click. Report it to IT and verify through a known channel.'},
+      {q:'How should client files be stored on a laptop?', a:'Encrypted, password-protected, and backed up to approved firm systems only.'},
+      {q:'Can you discuss a case on public Wi-Fi?', a:'Avoid it; use a VPN and never expose confidential information on unsecured networks.'},
+      {q:'A vendor needs access to client data. What is required?', a:'A confidentiality/data-processing agreement and least-privilege access.'},
+      {q:'What is your duty if you suspect a data breach?', a:'Report immediately, contain it, preserve evidence, and follow notification rules.'},
+      {q:'How do you dispose of confidential paper files?', a:'Shred per the firm\'s retention and destruction policy — never the regular trash.'},
+      {q:'Someone tailgates into the office behind you. What do you do?', a:'Verify they belong or direct them to reception; protect physical security.'},
+    ],
+    evPool:[
+      {t:'IT outage takes down the document system', d:'Switch to offline backups, log affected work, and notify operations.', c:15},
+      {t:'A phishing campaign targets the firm', d:'Alert staff, report to IT, and avoid all suspicious links.', c:30},
+      {t:'A laptop with client files is lost', d:'Report immediately, trigger remote wipe, and follow the breach protocol.', c:12},
+      {t:'A client requests a secure file transfer', d:'Use the firm\'s encrypted portal, not email attachments.', c:50},
+      {t:'A confidential email is accidentally CC\'d broadly', d:'Recall if possible, notify the supervisor, and document the incident.', c:25},
+    ],
+  },
+  {
+    id:'billing', icon:'💰', name:'Trust Accounting & Billing',
+    desc:'Retainers, trust funds, and ethical billing.', pick:5, epick:4,
+    qPool:[
+      {q:'Where do unearned client retainers go?', a:'Into a client trust account (IOLTA) — never the firm\'s operating account.'},
+      {q:'Can you pay a firm bill directly from the trust account?', a:'Only after fees are earned and properly invoiced; never commingle funds.'},
+      {q:'What must every time entry include?', a:'Date, matter, a clear task description, and accurate time — no block-billing of unrelated work.'},
+      {q:'A client disputes an invoice. How do you handle it?', a:'Review the entries, discuss professionally, and escalate to the billing attorney.'},
+      {q:'How often should trust accounts be reconciled?', a:'Regularly (commonly monthly), matching ledgers to bank statements exactly.'},
+      {q:'Can you bill two clients for the same hour?', a:'No. Bill actual time once; allocate shared work fairly.'},
+      {q:'What happens to leftover retainer funds at matter close?', a:'Return the unearned balance to the client with a final accounting.'},
+      {q:'Is it ethical to round time up generously?', a:'No. Time must be recorded accurately and honestly.'},
+    ],
+    evPool:[
+      {t:'A trust account reconciliation shows a discrepancy', d:'Stop, investigate immediately, and notify the responsible partner.', c:20},
+      {t:'A client requests a detailed billing breakdown', d:'Produce a clear, itemized invoice from time records.', c:50},
+      {t:'A retainer balance runs low mid-matter', d:'Notify the client and request a replenishment per the engagement letter.', c:45},
+      {t:'A bookkeeping error posts a fee before it\'s earned', d:'Reverse it and correct the trust ledger right away.', c:25},
+    ],
+  },
+];
+
+function shuffle(a){const x=a.slice();for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]];}return x;}
+
+function applyPreset(id){
+  const pack = PRESETS.find(p=>p.id===id); if(!pack) return;
+  if(!store.firm){ store.firm = $('#firmInput').value.trim() || pack.name.split(' ')[0]+' Law Group'; }
+  store.questions = shuffle(pack.qPool).slice(0, pack.pick).map(o=>({...o}));
+  store.events    = shuffle(pack.evPool).slice(0, pack.epick).map(o=>({...o}));
+  store.currentPack = id;
+  save(); refreshFirm(); renderQ(); renderEv(); renderSimStats(); renderPackBanner();
+  toast('Loaded "'+pack.name+'" — randomized ✦');
+  go('questions');
+}
+
+/* Append a randomized batch from a pack onto existing questions/events (no wipe). */
+function appendPreset(id){
+  const pack = PRESETS.find(p=>p.id===id); if(!pack) return;
+  const haveQ = new Set(store.questions.map(o=>o.q));
+  const haveE = new Set(store.events.map(o=>o.t));
+  const newQ = shuffle(pack.qPool).filter(o=>!haveQ.has(o.q)).slice(0, pack.pick).map(o=>({...o}));
+  const newE = shuffle(pack.evPool).filter(o=>!haveE.has(o.t)).slice(0, pack.epick).map(o=>({...o}));
+  if(!newQ.length && !newE.length){ toast('You already have all of this pack\'s items ✦'); return; }
+  store.questions.push(...newQ);
+  store.events.push(...newE);
+  clearPack(); /* mixed custom set, not a single pristine pack */
+  save(); renderQ(); renderEv(); renderSimStats();
+  toast('Added '+newQ.length+' question(s) + '+newE.length+' event(s) from '+pack.name+' ✦');
+}
+
+function presetCardsHTML(){
+  return PRESETS.map(p=>`
+    <button class="preset" data-pack="${p.id}">
+      <div class="pico">${p.icon}</div>
+      <div class="pname">${p.name}</div>
+      <div class="pdesc">${p.desc}</div>
+      <div class="pmeta">${p.qPool.length} questions · ${p.evPool.length} events in pool</div>
+    </button>`).join('');
+}
+function renderPresetGrid(){
+  /* Welcome page: clicking LOADS (replaces) the pack */
+  $('#presetGrid').innerHTML = presetCardsHTML();
+  $$('#presetGrid .preset').forEach(b=>b.addEventListener('click',()=>applyPreset(b.dataset.pack)));
+  /* Quiz page: clicking ADDS (appends) a randomized batch */
+  $('#presetGridQ').innerHTML = presetCardsHTML();
+  $$('#presetGridQ .preset').forEach(b=>b.addEventListener('click',()=>appendPreset(b.dataset.pack)));
+}
+
+function renderPackBanner(){
+  const banner = $('#packBanner');
+  const renew = $('#renewBtn');
+  const pack = PRESETS.find(p=>p.id===store.currentPack);
+  if(pack){
+    banner.style.display='block';
+    banner.className='pack-banner';
+    banner.innerHTML = `${pack.icon} Training pack: <strong>${pack.name}</strong> — press <em>Renew pack</em> to shuffle a fresh set.`;
+    renew.style.display='inline-block';
+  } else {
+    banner.style.display='none'; renew.style.display='none';
+  }
+}
+$('#renewBtn').addEventListener('click',()=>{ if(store.currentPack) applyPreset(store.currentPack); });
+
+/* clearing the pack when user manually edits keeps the banner honest */
+function clearPack(){ if(store.currentPack){ store.currentPack=null; save(); renderPackBanner(); } }
+
+/* ============ Save / Load File ============ */
+$('#saveFileBtn').addEventListener('click',()=>{
+  const data = {
+    app:'LexAcademy', version:1, savedAt:new Date().toISOString(),
+    firm:store.firm, motto:store.motto,
+    questions:store.questions, events:store.events, currentPack:store.currentPack||null,
+  };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const safe = (store.firm||'lex-academy').replace(/[^a-z0-9]+/gi,'-').toLowerCase();
+  a.href=url; a.download = safe+'-save.json';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  toast('Save file downloaded 💾');
+});
+$('#loadFileBtn').addEventListener('click',()=> $('#fileInput').click());
+$('#fileInput').addEventListener('change',e=>{
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    try{
+      const d = JSON.parse(ev.target.result);
+      if(d.app!=='LexAcademy') throw new Error('not a Lex save');
+      store.firm = d.firm||''; store.motto = d.motto||'';
+      store.questions = Array.isArray(d.questions)?d.questions:[];
+      store.events = Array.isArray(d.events)?d.events:[];
+      store.currentPack = d.currentPack||null;
+      save(); refreshFirm(); renderQ(); renderEv(); renderSimStats(); renderPackBanner();
+      toast('Save file loaded ✦ '+(store.firm||''));
+      go('questions');
+    }catch(err){ toast('⚠ That file isn\'t a valid Lex Academy save.'); }
+    $('#fileInput').value='';
+  };
+  reader.readAsText(file);
+});
+
+/* ============ Init ============ */
+resetBuilder();                 /* seed 3 starter answer-option rows */
+renderPresetGrid(); renderPackBanner();
+refreshFirm(); renderQ(); renderEv(); renderSimStats();
+// Enter-to-add conveniences
+$('#firmInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('#startBtn').click();});
+$('#evTitle').addEventListener('keydown',e=>{if(e.key==='Enter')$('#evDesc').focus();});
+</script>
+</body>
+</html>
